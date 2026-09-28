@@ -121,6 +121,31 @@ Verifikasi manual yang juga dinilai:
 - `http://localhost:8000/health` — balas `200` dengan `{"status":"ok"}`
 - `http://localhost:8000/docs` — OpenAPI terbuka
 
+### Verifikasi Cepat Requirement UTS (Kelompok 1 — Domain Pelatihan HR)
+
+| Requirement | Cara Uji Cepat | Hasil yang Diharapkan |
+|---|---|---|
+| **B1** (GET /sessions) | Buka `http://localhost:8000/sessions?page=1&size=5&search=python` | HTTP 200, mengembalikan sesi pelatihan Python berpaginasi |
+| **B2** (GET /sessions/{id}) | Buka `http://localhost:8000/sessions/999` di browser | HTTP 404 `{"detail": "Sesi pelatihan tidak ditemukan"}` |
+| **B3** (POST /sessions) | Buka `/docs`, eksekusi `POST /sessions` dengan data baru | HTTP 201 Created dengan `id` baru ter-generate |
+| **B4** (DELETE /sessions/{id}) | Buka `/docs`, eksekusi `DELETE /sessions/{id}` | HTTP 204 No Content |
+| **B5** (CORS) | Cek header response untuk origin `localhost:5173` | `access-control-allow-origin: http://localhost:5173` |
+| **F1 & F2** (4 State & Retry) | Matikan backend (`Ctrl+C`), refresh frontend $\rightarrow$ error & tombol retry muncul. Nyalakan backend, klik "Coba Lagi" $\rightarrow$ data muncul kembali | 4 state (loading, data, empty, error) teruji penuh |
+| **F3** (Form Create) | Klik "+ Tambah Sesi", submit kosong $\rightarrow$ error validasi klien muncul | Validasi input klien dan tampilan error server |
+| **F4** (Delete & Refresh) | Klik tombol "Hapus" pada baris sesi pelatihan | Dialog konfirmasi muncul; tabel otomatis ter-refresh |
+| **Q1 & Q2** (HTML & Keyboard) | Navigasi halaman hanya dengan tombol `Tab` di keyboard | Kotak fokus terlihat tegas; semua input memiliki `<label>` |
+| **Q4** (File < 100 baris) | Periksa line count berkas di `backend/app/` dan `frontend/src/` | Tidak ada berkas melebihi 100 baris |
+
+### Pembagian Requirement UTS per Anggota (Kelompok 1)
+
+| Anggota | Peran / Fokus | Requirement UTS | Ruang Lingkup |
+|---|---|---|---|
+| **Anggota 1** | Backend Lead & Data | **B1, B2** + Dataset | Dataset `data.py`, pagination, query search, 404 handler |
+| **Anggota 2** | Backend Mutation | **B3, B4, B5** | Validasi Pydantic in/out, POST 201, DELETE 204, CORS |
+| **Anggota 3** | Frontend State Lead | **F1, F2** | Render on mount + cleanup unmount, 4-state UI, tombol Retry |
+| **Anggota 4** | Frontend Form & Quality | **F3, F4, Q1, Q2, Q4** | Form create, modal dialog konfirmasi delete, aksesibilitas keyboard |
+
+
 ## 5. Masalah yang sering muncul
 
 | Gejala | Sebab biasanya | Tindakan |
@@ -201,7 +226,7 @@ nilainya 0.
 - Sesi 5 — GitHub Copilot, autocomplete pada model SQLAlchemy. Ditinjau dan diubah manual.
 -->
 
-- _(belum ada)_
+- Sesi 7 & Persiapan UTS — Google Antigravity (Gemini), digunakan sebelum Sesi 8 untuk asistensi perancangan struktur folder, dataset sintetis in-memory, skema Pydantic, dan pemisahan komponen Vue modular <100 baris. Seluruh logika dipelajari mandiri oleh tiap anggota kelompok untuk persiapan pembelaan lisan.
 
 ## Kalau kamu tersendat
 
