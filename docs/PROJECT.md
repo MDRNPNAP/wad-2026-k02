@@ -16,24 +16,25 @@ Commit berkas ini dalam PR `feature/kerangka` yang sama dengan artefak Sesi 2.
 
 **A1 · Domain.** Aplikasi ini untuk siapa, mengurus apa. Satu kalimat.
 
-> `<contoh: Aplikasi pencatatan kunjungan pasien untuk klinik kecil.>`
+> Aplikasi pencatatan sesi pelatihan untuk tim HR perusahaan, mencakup jadwal, pemateri, dan peserta.
 
 **A2 · Alur inti.** Siapa melakukan apa, lalu melihat apa. Satu kalimat. Inilah yang akan kamu
 demokan selama 90 detik di Sesi 15.
 
-> `<contoh: Petugas login, mencatat satu kunjungan pasien, lalu melihat grafik kunjungan per bulan.>`
+> Staf HR login, membuat sesi pelatihan baru, mendaftarkan peserta ke sesi itu, lalu melihat grafik jumlah sesi per departemen.
 
 **A3 · Entitas induk.** Nama tabel + 4–6 kolom.
 
-> `<contoh: pasien — id, nama, tanggal_lahir, no_telepon, dibuat_pada>`
+> sesi_pelatihan — id, judul, pemateri, departemen, tanggal, kapasitas
 
 **A4 · Entitas anak.** Nama tabel + 4–6 kolom, termasuk foreign key ke induk.
 
-> `<contoh: kunjungan — id, pasien_id (FK), tanggal, keluhan, biaya>`
+> pendaftaran — id, sesi_id (FK), nama_peserta, email, dibuat_pada
 
 **A5 · Satu angka yang digambar grafik.** Angka agregat, bukan daftar.
 
-> `<contoh: jumlah kunjungan per bulan, 12 bulan terakhir>`
+> jumlah sesi pelatihan per departemen
+
 
 ### Pembagian slice (diisi malam ini juga)
 
