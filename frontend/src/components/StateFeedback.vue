@@ -1,4 +1,4 @@
-<template>
+vite<template>
   <div v-if="state === 'loading'" class="feedback-box state-loading" role="status">
     <div class="spinner" aria-hidden="true"></div>
     <p>Memuat data sesi pelatihan...</p>
