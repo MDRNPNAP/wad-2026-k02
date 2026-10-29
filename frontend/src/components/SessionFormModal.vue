@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isOpen" class="modal-backdrop" @click.self="$emit('close')">
+  <div v-if="isOpen" class="modal-backdrop" @click.self="handleClose">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="form-title">
       <h3 id="form-title">Tambah Sesi Pelatihan Baru</h3>
       <div v-if="serverError" class="server-error" role="alert">{{ serverError }}</div>
@@ -36,7 +36,7 @@
           </div>
         </div>
         <div class="modal-actions">
-          <button type="button" class="btn-cancel" @click="$emit('close')">Batal</button>
+          <button type="button" class="btn-cancel" @click="handleClose">Batal</button>
           <button type="submit" class="btn-primary" :disabled="isSubmitting">
             {{ isSubmitting ? 'Menyimpan...' : 'Simpan Sesi' }}
           </button>
@@ -47,13 +47,21 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, watch } from 'vue'
 
-defineProps({ isOpen: Boolean, isSubmitting: Boolean, serverError: String })
+const props = defineProps({ isOpen: Boolean, isSubmitting: Boolean, serverError: String })
 const emit = defineEmits(['close', 'submit'])
 
 const form = reactive({ title: '', trainer: '', department: 'All Departments', date: '', duration_hours: 4, capacity: 30, status: 'Scheduled' })
 const errors = reactive({ title: '', trainer: '', date: '' })
+
+function resetForm() {
+  form.title = ''; form.trainer = ''; form.department = 'All Departments'
+  form.date = ''; form.duration_hours = 4; form.capacity = 30; form.status = 'Scheduled'
+  errors.title = ''; errors.trainer = ''; errors.date = ''
+}
+
+watch(() => props.isOpen, (val) => { if (!val) resetForm() })
 
 function validate() {
   errors.title = form.title.trim().length < 3 ? 'Judul minimal 3 karakter' : ''
@@ -63,7 +71,15 @@ function validate() {
 }
 
 function handleSubmit() {
-  if (validate()) emit('submit', { ...form })
+  if (validate()) {
+    emit('submit', { ...form })
+    resetForm()
+  }
+}
+
+function handleClose() {
+  resetForm()
+  emit('close')
 }
 </script>
 
@@ -78,5 +94,4 @@ label { font-size: 0.85rem; font-weight: 600; color: #334155; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem; }
 .btn-cancel { padding: 0.5rem 1rem; background: #f1f5f9; color: #334155; }
 .btn-primary { padding: 0.5rem 1rem; background: #2563eb; color: white; }
-.btn-primary:hover { background: #1d4ed8; }
 </style>
