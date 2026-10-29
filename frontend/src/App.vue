@@ -2,44 +2,50 @@
   <div class="container">
     <header class="app-header">
       <h1>Pencatat Sesi Pelatihan HR</h1>
-      <p class="subtitle">Kelompok 1 &middot; Human Resources Internal Training</p>
+      <p class="subtitle">Kelompok 1 &middot; SQLite Persistence &middot; RBAC Auth</p>
     </header>
 
     <main>
-      <AppToolbar v-model="searchQuery" @update:model-value="onSearch" @open-create="isFormOpen = true" />
+      <AppToolbar
+        v-model="searchQuery" :current-user="currentUser"
+        @update:model-value="onSearch" @open-create="isFormOpen = true"
+        @open-login="isLoginOpen = true" @open-admin="isAdminOpen = true"
+        @logout="handleLogout"
+      />
       <StateFeedback :state="state" :error-message="errorMsg" @retry="loadData" />
       <SessionList
         v-if="state === 'data'"
         :sessions="items" :page="page" :total-pages="totalPages" :total="total"
         @change-page="(p) => { page = p; loadData() }"
-        @request-delete="targetDelete = $event"
+        @request-edit="openEdit" @request-delete="targetDelete = $event"
       />
     </main>
 
-    <SessionFormModal
-      :is-open="isFormOpen" :is-submitting="isSubmitting" :server-error="formError"
-      @close="isFormOpen = false" @submit="handleCreate"
-    />
-    <DeleteConfirmModal
-      :session="targetDelete" :is-deleting="isDeleting"
-      @cancel="targetDelete = null" @confirm="handleDelete"
-    />
+    <LoginForm :is-open="isLoginOpen" @close="isLoginOpen = false" @login-success="onLoginSuccess" />
+    <AdminUserModal :is-open="isAdminOpen" @close="isAdminOpen = false" />
+    <SessionFormModal :is-open="isFormOpen" :is-submitting="isSubmitting" :server-error="formError" @close="isFormOpen = false" @submit="handleCreate" />
+    <SessionEditModal :is-open="isEditOpen" :session="targetEdit" :is-submitting="isEditing" :server-error="editError" @close="isEditOpen = false" @submit="handleUpdate" />
+    <DeleteConfirmModal :session="targetDelete" :is-deleting="isDeleting" @cancel="targetDelete = null" @confirm="handleDelete" />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { fetchSessions, createSessionApi, deleteSessionApi } from './api.js'
+import { fetchSessions, createSessionApi, updateSessionApi, deleteSessionApi, getStoredUser, clearAuth } from './api.js'
 import AppToolbar from './components/AppToolbar.vue'
 import StateFeedback from './components/StateFeedback.vue'
 import SessionList from './components/SessionList.vue'
 import SessionFormModal from './components/SessionFormModal.vue'
+import SessionEditModal from './components/SessionEditModal.vue'
 import DeleteConfirmModal from './components/DeleteConfirmModal.vue'
+import LoginForm from './components/LoginForm.vue'
+import AdminUserModal from './components/AdminUserModal.vue'
 
-const items = ref([]), state = ref('loading'), errorMsg = ref('')
-const page = ref(1), totalPages = ref(1), total = ref(0), searchQuery = ref('')
+const items = ref([]), state = ref('loading'), errorMsg = ref(''), page = ref(1), totalPages = ref(1), total = ref(0), searchQuery = ref('')
 const isFormOpen = ref(false), isSubmitting = ref(false), formError = ref('')
+const isEditOpen = ref(false), targetEdit = ref(null), isEditing = ref(false), editError = ref('')
 const targetDelete = ref(null), isDeleting = ref(false)
+const isLoginOpen = ref(false), isAdminOpen = ref(false), currentUser = ref(getStoredUser())
 let controller = null, searchTimer = null
 
 async function loadData() {
@@ -51,31 +57,31 @@ async function loadData() {
     state.value = res.items.length === 0 ? 'empty' : 'data'
   } catch (err) {
     if (err.name === 'AbortError') return
-    state.value = 'error'; errorMsg.value = err.message || 'Gagal terhubung ke server backend'
+    state.value = 'error'; errorMsg.value = err.message || 'Gagal terhubung ke backend'
   }
 }
 
-function onSearch() {
-  clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => { page.value = 1; loadData() }, 300)
-}
+function onSearch() { clearTimeout(searchTimer); searchTimer = setTimeout(() => { page.value = 1; loadData() }, 300) }
+function onLoginSuccess(u) { currentUser.value = u; loadData() }
+function handleLogout() { clearAuth(); currentUser.value = null; loadData() }
+function openEdit(s) { targetEdit.value = s; editError.value = ''; isEditOpen.value = true }
 
 async function handleCreate(payload) {
   isSubmitting.value = true; formError.value = ''
-  try {
-    await createSessionApi(payload)
-    isFormOpen.value = false; await loadData()
-  } catch (err) { formError.value = err.message }
-  finally { isSubmitting.value = false }
+  try { await createSessionApi(payload); isFormOpen.value = false; await loadData() }
+  catch (err) { formError.value = err.message } finally { isSubmitting.value = false }
+}
+
+async function handleUpdate(payload) {
+  isEditing.value = true; editError.value = ''
+  try { await updateSessionApi(targetEdit.value.id, payload); isEditOpen.value = false; await loadData() }
+  catch (err) { editError.value = err.message } finally { isEditing.value = false }
 }
 
 async function handleDelete(id) {
   isDeleting.value = true
-  try {
-    await deleteSessionApi(id)
-    targetDelete.value = null; await loadData()
-  } catch (err) { alert(err.message) }
-  finally { isDeleting.value = false }
+  try { await deleteSessionApi(id); targetDelete.value = null; await loadData() }
+  catch (err) { alert(err.message) } finally { isDeleting.value = false }
 }
 
 onMounted(loadData)
