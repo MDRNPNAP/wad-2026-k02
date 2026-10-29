@@ -227,6 +227,69 @@ nilainya 0.
 -->
 
 - Sesi 7 & Persiapan UTS — Google Antigravity (Gemini), digunakan sebelum Sesi 8 untuk asistensi perancangan struktur folder, dataset sintetis in-memory, skema Pydantic, dan pemisahan komponen Vue modular <100 baris. Seluruh logika dipelajari mandiri oleh tiap anggota kelompok untuk persiapan pembelaan lisan.
+- Persiapan UAS Part 1 — Google Antigravity (Gemini), asistensi perancangan arsitektur SQLAlchemy SQLite persistence, password hashing bcrypt, token JWT (Session 10 pattern), dan RBAC object-level authorization.
+
+---
+
+## UAS Part 1 — Demo Accounts & Video Verification Guide
+
+Sesuai instruksi UAS Part 1, aplikasi telah dilengkapi dengan **Database Persistence (SQLite + SQLAlchemy)**, **Autentikasi (Bcrypt + JWT)**, dan **Otorisasi Berbasis Peran & Kepemilikan (RBAC)**.
+
+### 1. Akun Demo untuk Dosen / Verifikasi Cepat
+
+| Pengguna | Username | Password | Peran (Role) | Keterangan Izin |
+|---|---|---|---|---|
+| **Admin** | `admin` | `admin123` | `admin` | Dapat membuat akun baru (`POST /users`), membaca & mengelola seluruh sesi. |
+| **User A** | `usera` | `usera123` | `user` | Dapat membuat & mengupdate data sesi miliknya sendiri. |
+| **User B** | `userb` | `userb123` | `user` | Hanya dapat mengupdate datanya sendiri; **DILINTANGI (HTTP 403)** mengubah data User A. |
+
+> Catatan: Akun `admin` di-seed otomatis saat backend pertama kali dijalankan. Akun `User A` dan `User B` dapat dibuat langsung oleh akun Admin melalui tombol **⚙️ Buat Akun (Admin)** di antarmuka web.
+
+---
+
+### 2. Panduan Skenario Rekaman Video (Tanpa Potongan, < 5 Menit)
+
+Rekam satu video berkesinambungan (*continuous screencast*, tanpa cut) yang memperagakan 5 langkah berikut secara berurutan:
+
+1. **Langkah 1 — Login sebagai Admin**:
+   - Buka aplikasi di browser (`http://localhost:5173`).
+   - Klik tombol **Login** di pojok kanan atas.
+   - Masukkan username `admin` dan password `admin123` (atau klik tombol pintasan **Admin**).
+   - Pastikan muncul badge `Logout (admin)` dan tombol `⚙️ Buat Akun (Admin)`.
+2. **Langkah 2 — Admin membuat User A dan User B**:
+   - Klik tombol **⚙️ Buat Akun (Admin)**.
+   - Buat akun pertama: username `usera`, nama `User A`, password `usera123` &rarr; Klik **Buat Akun**.
+   - Buat akun kedua: username `userb`, nama `User B`, password `userb123` &rarr; Klik **Buat Akun**.
+   - Tutup modal.
+3. **Langkah 3 — Logout Admin & Login sebagai User A**:
+   - Klik **Logout (admin)**.
+   - Klik **Login**, masukkan username `usera` dan password `usera123` (atau klik tombol pintasan **User A**).
+   - Pastikan header menampilkan `Logout (usera)`.
+4. **Langkah 4 — User A memperbarui datanya sendiri**:
+   - Klik **+ Tambah Sesi**, buat sesi baru (misal: judul `Pelatihan AI by User A`, durasi `4`).
+   - Pada tabel, cari sesi milik User A (tertera label pemilik: `User A`).
+   - Klik tombol **Ubah** pada baris tersebut. Ubah durasi menjadi `6` atau ganti judulnya &rarr; Klik **Simpan Perubahan**.
+   - Data berhasil terupdate! (Membuktikan User A dapat mengelola datanya sendiri).
+5. **Langkah 5 — Login User B & Buktikan User B TIDAK BISA mengubah data User A**:
+   - Klik **Logout (usera)**.
+   - Klik **Login**, masukkan username `userb` dan password `userb123` (atau klik tombol pintasan **User B**).
+   - Pada tabel, cari sesi milik User A yang tadi dibuat.
+   - Klik tombol **Ubah** pada sesi milik User A tersebut, coba klik **Simpan Perubahan** (atau klik **Hapus**).
+   - Sistem backend langsung menolak dan menampilkan pesan peringatan **HTTP 403 Forbidden: Akses ditolak: Anda tidak memiliki izin untuk mengubah data milik pengguna lain.**
+   - Langkah ini membuktikan implementasi otorisasi (RBAC) berjalan dengan benar!
+
+---
+
+### 3. Verifikasi Otomatis via Terminal (Automated Test)
+
+Untuk menguji seluruh alur di atas secara instan sebelum melakukan rekaman video:
+
+```bash
+# Dari root repositori:
+python verify_uas.py
+```
+Seluruh 5 tahap akan diuji secara otomatis dan mengembalikan pesan `[ALL TESTS PASSED SUCCESSFULLY!]`.
+
 
 ## Kalau kamu tersendat
 
