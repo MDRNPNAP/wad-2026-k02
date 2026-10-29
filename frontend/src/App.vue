@@ -1,31 +1,38 @@
 <template>
   <div class="container">
-    <header class="app-header">
-      <h1>Pencatat Sesi Pelatihan HR</h1>
-      <p class="subtitle">Kelompok 1 &middot; SQLite Persistence &middot; RBAC Auth</p>
-    </header>
+    <LoginForm
+      v-if="!currentUser && !isGuestMode"
+      @login-success="onLoginSuccess"
+      @guest-mode="onGuestMode"
+    />
 
-    <main>
-      <AppToolbar
-        v-model="searchQuery" :current-user="currentUser"
-        @update:model-value="onSearch" @open-create="isFormOpen = true"
-        @open-login="isLoginOpen = true" @open-admin="isAdminOpen = true"
-        @logout="handleLogout"
-      />
-      <StateFeedback :state="state" :error-message="errorMsg" @retry="loadData" />
-      <SessionList
-        v-if="state === 'data'"
-        :sessions="items" :page="page" :total-pages="totalPages" :total="total"
-        @change-page="(p) => { page = p; loadData() }"
-        @request-edit="openEdit" @request-delete="targetDelete = $event"
-      />
-    </main>
+    <template v-else>
+      <header class="app-header">
+        <h1>Pencatat Sesi Pelatihan HR</h1>
+        <p class="subtitle">Kelompok 1 &middot; SQLite Persistence &middot; RBAC Auth</p>
+      </header>
 
-    <LoginForm :is-open="isLoginOpen" @close="isLoginOpen = false" @login-success="onLoginSuccess" />
-    <AdminUserModal :is-open="isAdminOpen" @close="isAdminOpen = false" />
-    <SessionFormModal :is-open="isFormOpen" :is-submitting="isSubmitting" :server-error="formError" @close="isFormOpen = false" @submit="handleCreate" />
-    <SessionEditModal :is-open="isEditOpen" :session="targetEdit" :is-submitting="isEditing" :server-error="editError" @close="isEditOpen = false" @submit="handleUpdate" />
-    <DeleteConfirmModal :session="targetDelete" :is-deleting="isDeleting" @cancel="targetDelete = null" @confirm="handleDelete" />
+      <main>
+        <AppToolbar
+          v-model="searchQuery" :current-user="currentUser"
+          @update:model-value="onSearch" @open-create="isFormOpen = true"
+          @open-login="isGuestMode = false" @open-admin="isAdminOpen = true"
+          @logout="handleLogout"
+        />
+        <StateFeedback :state="state" :error-message="errorMsg" @retry="loadData" />
+        <SessionList
+          v-if="state === 'data'"
+          :sessions="items" :page="page" :total-pages="totalPages" :total="total"
+          @change-page="(p) => { page = p; loadData() }"
+          @request-edit="openEdit" @request-delete="targetDelete = $event"
+        />
+      </main>
+
+      <AdminUserModal :is-open="isAdminOpen" @close="isAdminOpen = false" />
+      <SessionFormModal :is-open="isFormOpen" :is-submitting="isSubmitting" :server-error="formError" @close="isFormOpen = false" @submit="handleCreate" />
+      <SessionEditModal :is-open="isEditOpen" :session="targetEdit" :is-submitting="isEditing" :server-error="editError" @close="isEditOpen = false" @submit="handleUpdate" />
+      <DeleteConfirmModal :session="targetDelete" :is-deleting="isDeleting" @cancel="targetDelete = null" @confirm="handleDelete" />
+    </template>
   </div>
 </template>
 
@@ -45,7 +52,7 @@ const items = ref([]), state = ref('loading'), errorMsg = ref(''), page = ref(1)
 const isFormOpen = ref(false), isSubmitting = ref(false), formError = ref('')
 const isEditOpen = ref(false), targetEdit = ref(null), isEditing = ref(false), editError = ref('')
 const targetDelete = ref(null), isDeleting = ref(false)
-const isLoginOpen = ref(false), isAdminOpen = ref(false), currentUser = ref(getStoredUser())
+const isAdminOpen = ref(false), currentUser = ref(getStoredUser()), isGuestMode = ref(false)
 let controller = null, searchTimer = null
 
 async function loadData() {
@@ -62,8 +69,9 @@ async function loadData() {
 }
 
 function onSearch() { clearTimeout(searchTimer); searchTimer = setTimeout(() => { page.value = 1; loadData() }, 300) }
-function onLoginSuccess(u) { currentUser.value = u; loadData() }
-function handleLogout() { clearAuth(); currentUser.value = null; loadData() }
+function onLoginSuccess(u) { currentUser.value = u; isGuestMode.value = false; loadData() }
+function onGuestMode() { isGuestMode.value = true; loadData() }
+function handleLogout() { clearAuth(); currentUser.value = null; isGuestMode.value = false }
 function openEdit(s) { targetEdit.value = s; editError.value = ''; isEditOpen.value = true }
 
 async function handleCreate(payload) {
@@ -84,7 +92,7 @@ async function handleDelete(id) {
   catch (err) { alert(err.message) } finally { isDeleting.value = false }
 }
 
-onMounted(loadData)
+onMounted(() => { if (currentUser.value || isGuestMode.value) loadData() })
 onUnmounted(() => { controller?.abort(); clearTimeout(searchTimer) })
 </script>
 

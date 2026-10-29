@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isOpen" class="modal-backdrop" @click.self="$emit('close')">
+  <div v-if="isOpen" class="modal-backdrop" @click.self="handleClose">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="admin-user-title">
       <h3 id="admin-user-title">Admin: Daftarkan Pengguna Baru</h3>
       <div v-if="feedback" :class="feedbackType === 'error' ? 'error-box' : 'success-box'" role="alert">
@@ -16,10 +16,26 @@
         </div>
         <div class="form-group">
           <label for="new-password">Password</label>
-          <input id="new-password" v-model="form.password" type="password" placeholder="Minimal 6 karakter" required />
+          <div class="password-field">
+            <input
+              id="new-password"
+              v-model="form.password"
+              :type="showPassword ? 'text' : 'password'"
+              placeholder="Minimal 6 karakter"
+              required
+            />
+            <button
+              type="button"
+              class="btn-eye"
+              :title="showPassword ? 'Sembunyikan password' : 'Lihat password'"
+              @click="showPassword = !showPassword"
+            >
+              {{ showPassword ? '🙈' : '👁️' }}
+            </button>
+          </div>
         </div>
         <div class="modal-actions">
-          <button type="button" class="btn-cancel" @click="$emit('close')">Selesai</button>
+          <button type="button" class="btn-cancel" @click="handleClose">Selesai</button>
           <button type="submit" class="btn-primary" :disabled="loading">{{ loading ? 'Menyimpan...' : 'Buat Akun' }}</button>
         </div>
       </form>
@@ -28,13 +44,20 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { createUserApi } from '../api.js'
 
-defineProps({ isOpen: Boolean })
-defineEmits(['close'])
+const props = defineProps({ isOpen: Boolean })
+const emit = defineEmits(['close'])
 const form = reactive({ username: '', full_name: '', password: '', role: 'user' })
-const feedback = ref(''), feedbackType = ref(''), loading = ref(false)
+const feedback = ref(''), feedbackType = ref(''), loading = ref(false), showPassword = ref(false)
+
+function resetForm() {
+  form.username = ''; form.full_name = ''; form.password = ''
+  feedback.value = ''; showPassword.value = false
+}
+
+watch(() => props.isOpen, (val) => { if (!val) resetForm() })
 
 async function handleSubmit() {
   loading.value = true; feedback.value = ''
@@ -48,6 +71,11 @@ async function handleSubmit() {
     loading.value = false
   }
 }
+
+function handleClose() {
+  resetForm()
+  emit('close')
+}
 </script>
 
 <style scoped>
@@ -57,6 +85,9 @@ async function handleSubmit() {
 .success-box { background: #f0fdf4; color: #16a34a; padding: 0.5rem 0.75rem; border-radius: 6px; margin-bottom: 0.85rem; font-size: 0.85rem; }
 .form-group { margin-bottom: 0.75rem; display: flex; flex-direction: column; gap: 0.25rem; }
 .form-group label { font-size: 0.85rem; font-weight: 600; color: #334155; }
+.password-field { display: flex; align-items: center; position: relative; }
+.password-field input { width: 100%; padding-right: 2.5rem; }
+.btn-eye { position: absolute; right: 0.5rem; background: none; border: none; font-size: 1.1rem; cursor: pointer; padding: 0.25rem; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem; }
 .btn-cancel { padding: 0.5rem 1rem; background: #f1f5f9; color: #334155; }
 .btn-primary { padding: 0.5rem 1rem; background: #2563eb; color: white; }
